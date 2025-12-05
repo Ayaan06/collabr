@@ -2,22 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAuth, errorResponse, successResponse } from "@/lib/api";
 import { prisma } from "@/lib/prisma";
 
-type RouteContext = { params: Promise<{ id: string }> };
-
-async function getParams(context: RouteContext) {
-  return context.params;
-}
-
 export async function PATCH(
   req: NextRequest,
-  context: RouteContext,
+  context: { params: Promise<{ id: string }> },
 ): Promise<NextResponse> {
   const { user, response } = await requireAuth();
   if (!user) return response;
 
-  const params = await getParams(context);
+  const { id } = await context.params;
 
-  const message = await prisma.message.findUnique({ where: { id: params.id } });
+  const message = await prisma.message.findUnique({ where: { id } });
   if (!message) {
     return errorResponse("Message not found.", 404);
   }
@@ -34,7 +28,7 @@ export async function PATCH(
   }
 
   const updated = await prisma.message.update({
-    where: { id: params.id },
+    where: { id },
     data: { content },
   });
 
@@ -43,14 +37,14 @@ export async function PATCH(
 
 export async function DELETE(
   _req: NextRequest,
-  context: RouteContext,
+  context: { params: Promise<{ id: string }> },
 ): Promise<NextResponse> {
   const { user, response } = await requireAuth();
   if (!user) return response;
 
-  const params = await getParams(context);
+  const { id } = await context.params;
 
-  const message = await prisma.message.findUnique({ where: { id: params.id } });
+  const message = await prisma.message.findUnique({ where: { id } });
   if (!message) {
     return errorResponse("Message not found.", 404);
   }
@@ -59,7 +53,7 @@ export async function DELETE(
     return errorResponse("You can only delete your own messages.", 403);
   }
 
-  await prisma.message.delete({ where: { id: params.id } });
+  await prisma.message.delete({ where: { id } });
 
   return successResponse({ success: true });
 }
