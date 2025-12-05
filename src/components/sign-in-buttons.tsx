@@ -1,7 +1,5 @@
 "use client";
 
-import Link from "next/link";
-import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 
 export function SignInButtons() {
@@ -9,25 +7,15 @@ export function SignInButtons() {
 
   return (
     <div className="flex flex-col gap-3">
-      <Button
-        className="w-full"
-        variant="outline"
-        onClick={() => signIn("google", { callbackUrl })}
-        asChild
-      >
-        <Link href={`/api/auth/signin/google?callbackUrl=${encodeURIComponent(callbackUrl)}`}>
+      <Button className="w-full" variant="outline" asChild>
+        <a href={`/api/auth/signin/google?callbackUrl=${encodeURIComponent(callbackUrl)}`}>
           Continue with Google
-        </Link>
+        </a>
       </Button>
-      <Button
-        className="w-full"
-        variant="outline"
-        onClick={() => signIn("github", { callbackUrl })}
-        asChild
-      >
-        <Link href={`/api/auth/signin/github?callbackUrl=${encodeURIComponent(callbackUrl)}`}>
+      <Button className="w-full" variant="outline" asChild>
+        <a href={`/api/auth/signin/github?callbackUrl=${encodeURIComponent(callbackUrl)}`}>
           Continue with GitHub
-        </Link>
+        </a>
       </Button>
     </div>
   );
