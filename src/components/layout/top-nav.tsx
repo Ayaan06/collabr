@@ -1,12 +1,15 @@
 "use client";
 
-import { Bell, MessageSquare, Search, Sparkles } from "lucide-react";
+import { Bell, LogOut, MessageSquare, Search, Sparkles, UserCircle2 } from "lucide-react";
 import Link from "next/link";
+import { useSession, signIn, signOut } from "next-auth/react";
 import { Avatar } from "../ui/avatar";
 import { Input } from "../ui/input";
 import { ThemeToggle } from "../theme-toggle";
 
 export function TopNav() {
+  const { data: session } = useSession();
+
   return (
     <header className="sticky top-0 z-40 backdrop-blur-xl">
       <div className="glass-panel flex items-center gap-4 border border-white/10 bg-[#070b17]/70 px-5 py-3">
@@ -27,7 +30,26 @@ export function TopNav() {
           <ThemeToggle />
           <IconButton icon={<Bell className="h-4 w-4" />} label="Notifications" />
           <IconButton icon={<MessageSquare className="h-4 w-4" />} label="Messages" />
-          <Avatar name="Avery Chen" className="border-white/25" />
+          {session?.user ? (
+            <div className="flex items-center gap-2">
+              <Avatar name={session.user.name ?? session.user.email ?? "You"} className="border-white/25" />
+              <button
+                onClick={() => signOut()}
+                className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/80 transition hover:border-white/30 hover:bg-white/10"
+              >
+                <LogOut className="h-3 w-3" />
+                Sign out
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => signIn()}
+              className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/80 transition hover:border-white/30 hover:bg-white/10"
+            >
+              <UserCircle2 className="h-4 w-4" />
+              Sign in
+            </button>
+          )}
         </div>
       </div>
     </header>

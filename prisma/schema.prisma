@@ -1,0 +1,172 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum InterestStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+enum MemberRole {
+  FOUNDER
+  CONTRIBUTOR
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  DONE
+}
+
+model User {
+  id             String             @id @default(cuid())
+  name           String?
+  email          String             @unique
+  image          String?
+  role           MemberRole?
+  headline       String?
+  bio            String?
+  location       String?
+  skills         String[]           @default([])
+  hashedPassword String?
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+
+  accounts          Account[]
+  sessions          Session[]
+  ownedProjects     Project[]           @relation("ProjectOwner")
+  projectInterests  ProjectInterest[]
+  projectMembership ProjectMember[]
+  sentMessages      Message[]           @relation("sentMessages")
+  receivedMessages  Message[]           @relation("receivedMessages")
+  notifications     Notification[]
+  assignedTasks     Task[]              @relation("TaskAssignee")
+}
+
+model Project {
+  id          String     @id @default(cuid())
+  title       String
+  description String
+  status      String     @default("active")
+  ownerId     String
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  owner      User               @relation("ProjectOwner", fields: [ownerId], references: [id])
+  interests  ProjectInterest[]
+  members    ProjectMember[]
+  messages   Message[]
+  tasks      Task[]
+}
+
+model ProjectInterest {
+  id        String          @id @default(cuid())
+  projectId String
+  userId    String
+  status    InterestStatus  @default(PENDING)
+  message   String?
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id])
+  user    User    @relation(fields: [userId], references: [id])
+
+  @@unique([projectId, userId])
+}
+
+model ProjectMember {
+  id        String      @id @default(cuid())
+  projectId String
+  userId    String
+  role      MemberRole  @default(CONTRIBUTOR)
+  createdAt DateTime    @default(now())
+
+  project Project @relation(fields: [projectId], references: [id])
+  user    User    @relation(fields: [userId], references: [id])
+
+  @@unique([projectId, userId])
+}
+
+model Message {
+  id           String    @id @default(cuid())
+  content      String
+  projectId    String?
+  senderId     String
+  recipientId  String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  project   Project? @relation(fields: [projectId], references: [id])
+  sender    User     @relation("sentMessages", fields: [senderId], references: [id])
+  recipient User?    @relation("receivedMessages", fields: [recipientId], references: [id])
+}
+
+model Task {
+  id          String      @id @default(cuid())
+  title       String
+  description String?
+  status      TaskStatus  @default(TODO)
+  projectId   String
+  assigneeId  String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  project  Project @relation(fields: [projectId], references: [id])
+  assignee User?   @relation("TaskAssignee", fields: [assigneeId], references: [id])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  title     String
+  body      String?
+  read      Boolean  @default(false)
+  userId    String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  oauth_token_secret String?
+  oauth_token        String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@unique([token])
+}
