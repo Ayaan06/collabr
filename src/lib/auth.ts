@@ -14,7 +14,8 @@ function assertEnv(name: string) {
 }
 
 export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma),
+  debug: true,
+  adapter: PrismaAdapter(prisma) as any,
   session: {
     strategy: "jwt",
   },
@@ -45,7 +46,6 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
   },
-  debug: process.env.NODE_ENV === "development",
 };
 
 export const getServerAuthSession = () => getServerSession(authOptions);
