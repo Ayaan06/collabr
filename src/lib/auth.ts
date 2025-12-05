@@ -1,5 +1,6 @@
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { compare } from "bcryptjs";
+import { randomBytes } from "crypto";
 import type { NextAuthOptions } from "next-auth";
 import { getServerSession } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
@@ -15,13 +16,23 @@ function assertEnv(name: string) {
   return value;
 }
 
-export const authOptions: NextAuthOptions = {
+function getNextAuthSecret() {
+  const secret = process.env.NEXTAUTH_SECRET;
+  if (secret) return secret;
+  // Avoid build-time crashes when the secret is missing; generate a per-run fallback in production.
+  if (process.env.NODE_ENV === "production") {
+    console.warn("NEXTAUTH_SECRET is not set. Generating a temporary secret for this build/run.");
+    return randomBytes(32).toString("hex");
+  }
+  return "development-secret";
+}
+
+export const authOptions: NextAuthOptions & { trustHost?: boolean } = {
   adapter: PrismaAdapter(prisma),
   session: {
     strategy: "database",
   },
-  secret: assertEnv("NEXTAUTH_SECRET"),
-  trustHost: true,
+  secret: getNextAuthSecret(),
   providers: [
     GoogleProvider({
       clientId: assertEnv("GOOGLE_CLIENT_ID"),
