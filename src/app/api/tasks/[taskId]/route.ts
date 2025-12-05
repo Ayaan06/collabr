@@ -1,4 +1,4 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { requireAuth, errorResponse, successResponse } from "@/lib/api";
 import { prisma } from "@/lib/prisma";
 import { TaskStatus } from "@prisma/client";
@@ -9,7 +9,10 @@ async function getParams(context: RouteContext) {
   return context.params;
 }
 
-export async function PATCH(req: NextRequest, context: RouteContext) {
+export async function PATCH(
+  req: NextRequest,
+  context: RouteContext,
+): Promise<NextResponse> {
   const { user, response } = await requireAuth();
   if (!user) return response;
 

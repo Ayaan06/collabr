@@ -1,4 +1,4 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { requireAuth, errorResponse, successResponse } from "@/lib/api";
 import { prisma } from "@/lib/prisma";
 
@@ -8,7 +8,10 @@ async function getParams(context: RouteContext) {
   return context.params;
 }
 
-export async function GET(_req: NextRequest, context: RouteContext) {
+export async function GET(
+  _req: NextRequest,
+  context: RouteContext,
+): Promise<NextResponse> {
   const params = await getParams(context);
 
   const project = await prisma.project.findUnique({
@@ -32,7 +35,10 @@ export async function GET(_req: NextRequest, context: RouteContext) {
   return successResponse(project);
 }
 
-export async function PATCH(req: NextRequest, context: RouteContext) {
+export async function PATCH(
+  req: NextRequest,
+  context: RouteContext,
+): Promise<NextResponse> {
   const { user, response } = await requireAuth();
   if (!user) return response;
 
@@ -65,7 +71,10 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
   return successResponse(updated);
 }
 
-export async function DELETE(_req: NextRequest, context: RouteContext) {
+export async function DELETE(
+  _req: NextRequest,
+  context: RouteContext,
+): Promise<NextResponse> {
   const { user, response } = await requireAuth();
   if (!user) return response;
 

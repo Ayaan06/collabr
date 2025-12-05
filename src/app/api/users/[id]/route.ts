@@ -1,4 +1,4 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { errorResponse, successResponse } from "@/lib/api";
 import { prisma } from "@/lib/prisma";
 
@@ -8,7 +8,10 @@ async function getParams(context: RouteContext) {
   return context.params;
 }
 
-export async function GET(_req: NextRequest, context: RouteContext) {
+export async function GET(
+  _req: NextRequest,
+  context: RouteContext,
+): Promise<NextResponse> {
   const params = await getParams(context);
 
   const user = await prisma.user.findUnique({
