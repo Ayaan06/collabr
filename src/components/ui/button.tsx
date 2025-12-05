@@ -7,6 +7,7 @@ import {
   type ButtonHTMLAttributes,
   type ElementType,
   type PropsWithChildren,
+  type ReactElement,
 } from "react";
 import { cn } from "@/lib/utils";
 
@@ -56,18 +57,24 @@ export function Button({
   );
 
   if (asChild && isValidElement(children)) {
-    return cloneElement(children as React.ReactElement, {
-      className: cn(
-        "relative inline-flex items-center justify-center gap-2 rounded-xl font-medium transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500",
-        variants[variant],
-        sizes[size],
-        loading && "opacity-75",
-        (children as React.ReactElement).props?.className,
-        className,
-      ),
-      children: content,
-      ...props,
-    });
+    const child = children as ReactElement<Record<string, unknown>>;
+    const childClassName =
+      typeof child.props?.className === "string" ? child.props.className : undefined;
+    return cloneElement(
+      child,
+      {
+        ...props,
+        className: cn(
+          "relative inline-flex items-center justify-center gap-2 rounded-xl font-medium transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500",
+          variants[variant],
+          sizes[size],
+          loading && "opacity-75",
+          childClassName,
+          className,
+        ),
+        children: content,
+      } as Record<string, unknown>,
+    );
   }
 
   return (
