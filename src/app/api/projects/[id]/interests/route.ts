@@ -2,9 +2,15 @@ import { NextRequest } from "next/server";
 import { requireAuth, errorResponse, successResponse } from "@/lib/api";
 import { prisma } from "@/lib/prisma";
 
-type Params = { params: { id: string } };
+type RouteContext<T> = { params: T } | { params: Promise<T> };
 
-export async function GET(_req: NextRequest, { params }: Params) {
+async function resolveParams<T>(context: RouteContext<T>): Promise<T> {
+  return context.params instanceof Promise ? await context.params : context.params;
+}
+
+export async function GET(_req: NextRequest, context: RouteContext<{ id: string }>) {
+  const params = await resolveParams(context);
+
   const interests = await prisma.projectInterest.findMany({
     where: { projectId: params.id },
     include: { user: true },
@@ -14,9 +20,11 @@ export async function GET(_req: NextRequest, { params }: Params) {
   return successResponse(interests);
 }
 
-export async function POST(req: NextRequest, { params }: Params) {
+export async function POST(req: NextRequest, context: RouteContext<{ id: string }>) {
   const { user, response } = await requireAuth();
   if (!user) return response;
+
+  const params = await resolveParams(context);
 
   const project = await prisma.project.findUnique({
     where: { id: params.id },

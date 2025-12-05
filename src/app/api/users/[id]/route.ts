@@ -2,9 +2,15 @@ import { NextRequest } from "next/server";
 import { errorResponse, successResponse } from "@/lib/api";
 import { prisma } from "@/lib/prisma";
 
-type Params = { params: { id: string } };
+type RouteContext<T> = { params: T } | { params: Promise<T> };
 
-export async function GET(_req: NextRequest, { params }: Params) {
+async function resolveParams<T>(context: RouteContext<T>): Promise<T> {
+  return context.params instanceof Promise ? await context.params : context.params;
+}
+
+export async function GET(_req: NextRequest, context: RouteContext<{ id: string }>) {
+  const params = await resolveParams(context);
+
   const user = await prisma.user.findUnique({
     where: { id: params.id },
     include: {
