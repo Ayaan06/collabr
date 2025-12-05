@@ -2,20 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAuth, errorResponse, successResponse } from "@/lib/api";
 import { prisma } from "@/lib/prisma";
 
-type RouteContext = { params: Promise<{ id: string }> };
-
-async function getParams(context: RouteContext) {
-  return context.params;
-}
-
 export async function GET(
   _req: NextRequest,
-  context: RouteContext,
+  context: { params: Promise<{ id: string }> },
 ): Promise<NextResponse> {
-  const params = await getParams(context);
+  const { id } = await context.params;
 
   const interests = await prisma.projectInterest.findMany({
-    where: { projectId: params.id },
+    where: { projectId: id },
     include: { user: true },
     orderBy: { createdAt: "desc" },
   });
@@ -25,15 +19,15 @@ export async function GET(
 
 export async function POST(
   req: NextRequest,
-  context: RouteContext,
+  context: { params: Promise<{ id: string }> },
 ): Promise<NextResponse> {
   const { user, response } = await requireAuth();
   if (!user) return response;
 
-  const params = await getParams(context);
+  const { id } = await context.params;
 
   const project = await prisma.project.findUnique({
-    where: { id: params.id },
+    where: { id },
     select: { ownerId: true, title: true },
   });
 
@@ -44,7 +38,7 @@ export async function POST(
   const existing = await prisma.projectInterest.findUnique({
     where: {
       projectId_userId: {
-        projectId: params.id,
+        projectId: id,
         userId: user.id,
       },
     },
@@ -59,7 +53,7 @@ export async function POST(
 
   const interest = await prisma.projectInterest.create({
     data: {
-      projectId: params.id,
+      projectId: id,
       userId: user.id,
       message,
     },

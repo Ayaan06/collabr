@@ -3,23 +3,17 @@ import { requireAuth, errorResponse, successResponse } from "@/lib/api";
 import { prisma } from "@/lib/prisma";
 import { InterestStatus } from "@prisma/client";
 
-type RouteContext = { params: Promise<{ projectId: string; interestId: string }> };
-
-async function getParams(context: RouteContext) {
-  return context.params;
-}
-
 export async function PATCH(
   req: NextRequest,
-  context: RouteContext,
+  context: { params: Promise<{ projectId: string; interestId: string }> },
 ): Promise<NextResponse> {
   const { user, response } = await requireAuth();
   if (!user) return response;
 
-  const params = await getParams(context);
+  const { projectId, interestId } = await context.params;
 
   const interest = await prisma.projectInterest.findUnique({
-    where: { id: params.interestId },
+    where: { id: interestId },
     include: { project: true, user: true },
   });
 
@@ -39,7 +33,7 @@ export async function PATCH(
   }
 
   const updated = await prisma.projectInterest.update({
-    where: { id: params.interestId },
+    where: { id: interestId },
     data: { status },
     include: { user: true },
   });
@@ -47,10 +41,10 @@ export async function PATCH(
   if (status === InterestStatus.ACCEPTED) {
     await prisma.projectMember.upsert({
       where: {
-        projectId_userId: { projectId: params.projectId, userId: interest.userId },
+        projectId_userId: { projectId, userId: interest.userId },
       },
       create: {
-        projectId: params.projectId,
+        projectId,
         userId: interest.userId,
       },
       update: {},

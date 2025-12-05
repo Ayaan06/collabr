@@ -2,20 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAuth, errorResponse, successResponse } from "@/lib/api";
 import { prisma } from "@/lib/prisma";
 
-type RouteContext = { params: Promise<{ id: string }> };
-
-async function getParams(context: RouteContext) {
-  return context.params;
-}
-
 export async function GET(
   _req: NextRequest,
-  context: RouteContext,
+  context: { params: Promise<{ id: string }> },
 ): Promise<NextResponse> {
-  const params = await getParams(context);
+  const { id } = await context.params;
 
   const project = await prisma.project.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: {
       owner: true,
       members: {
@@ -37,15 +31,15 @@ export async function GET(
 
 export async function PATCH(
   req: NextRequest,
-  context: RouteContext,
+  context: { params: Promise<{ id: string }> },
 ): Promise<NextResponse> {
   const { user, response } = await requireAuth();
   if (!user) return response;
 
-  const params = await getParams(context);
+  const { id } = await context.params;
 
   const project = await prisma.project.findUnique({
-    where: { id: params.id },
+    where: { id },
   });
 
   if (!project) {
@@ -64,7 +58,7 @@ export async function PATCH(
   if (body.status) data.status = String(body.status);
 
   const updated = await prisma.project.update({
-    where: { id: params.id },
+    where: { id },
     data,
   });
 
@@ -73,15 +67,15 @@ export async function PATCH(
 
 export async function DELETE(
   _req: NextRequest,
-  context: RouteContext,
+  context: { params: Promise<{ id: string }> },
 ): Promise<NextResponse> {
   const { user, response } = await requireAuth();
   if (!user) return response;
 
-  const params = await getParams(context);
+  const { id } = await context.params;
 
   const project = await prisma.project.findUnique({
-    where: { id: params.id },
+    where: { id },
     select: { ownerId: true },
   });
 
@@ -93,7 +87,7 @@ export async function DELETE(
     return errorResponse("Only the project owner can delete this project.", 403);
   }
 
-  await prisma.project.delete({ where: { id: params.id } });
+  await prisma.project.delete({ where: { id } });
 
   return successResponse({ success: true });
 }

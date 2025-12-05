@@ -3,23 +3,17 @@ import { requireAuth, errorResponse, successResponse } from "@/lib/api";
 import { prisma } from "@/lib/prisma";
 import { TaskStatus } from "@prisma/client";
 
-type RouteContext = { params: Promise<{ taskId: string }> };
-
-async function getParams(context: RouteContext) {
-  return context.params;
-}
-
 export async function PATCH(
   req: NextRequest,
-  context: RouteContext,
+  context: { params: Promise<{ taskId: string }> },
 ): Promise<NextResponse> {
   const { user, response } = await requireAuth();
   if (!user) return response;
 
-  const params = await getParams(context);
+  const { taskId } = await context.params;
 
   const task = await prisma.task.findUnique({
-    where: { id: params.taskId },
+    where: { id: taskId },
     include: { project: true },
   });
 
@@ -68,7 +62,7 @@ export async function PATCH(
   }
 
   const updated = await prisma.task.update({
-    where: { id: params.taskId },
+    where: { id: taskId },
     data,
   });
 
