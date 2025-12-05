@@ -3,17 +3,17 @@ import { requireAuth, errorResponse, successResponse } from "@/lib/api";
 import { prisma } from "@/lib/prisma";
 import { InterestStatus } from "@prisma/client";
 
-type RouteContext<T> = { params: T } | { params: Promise<T> };
+type RouteContext = { params: Promise<{ projectId: string; interestId: string }> };
 
-async function resolveParams<T>(context: RouteContext<T>): Promise<T> {
-  return context.params instanceof Promise ? await context.params : context.params;
+async function getParams(context: RouteContext) {
+  return context.params;
 }
 
-export async function PATCH(req: NextRequest, context: RouteContext<{ projectId: string; interestId: string }>) {
+export async function PATCH(req: NextRequest, context: RouteContext) {
   const { user, response } = await requireAuth();
   if (!user) return response;
 
-  const params = await resolveParams(context);
+  const params = await getParams(context);
 
   const interest = await prisma.projectInterest.findUnique({
     where: { id: params.interestId },
